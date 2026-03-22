@@ -271,7 +271,15 @@ function AgentCard({ agent, index }: { agent: any; index: number }) {
           </div>
         )}
         
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #334155' }}><span style={{ color: '#64748b', fontSize: '13px' }}>模型</span><span style={{ color: '#f8fafc', fontSize: '13px', fontWeight: 500 }}>{agent.model?.replace('bailian/', '')}</span></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #334155' }}>
+          <span style={{ color: '#64748b', fontSize: '13px' }}>模型</span>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ color: '#f8fafc', fontSize: '13px', fontWeight: 500 }}>{agent.model}</div>
+            {agent.activeModel && agent.activeModel !== agent.model && (
+              <div style={{ color: '#10b981', fontSize: '11px', marginTop: '2px' }}>使用中：{agent.activeModel}</div>
+            )}
+          </div>
+        </div>
         
         {skills.length > 0 && (
           <div style={{ marginBottom: '12px' }}>

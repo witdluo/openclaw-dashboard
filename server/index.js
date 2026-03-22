@@ -97,6 +97,44 @@ app.get('/api/agents', async (req, res) => {
       const skills = agent.skills || agentConfig.skills || []
       const emoji = agent.identity?.emoji || '🤖'
       
+      // 获取最近会话中使用的模型
+      let activeModel = null
+      try {
+        const files = await fs.promises.readdir(sessionsDir)
+        const jsonlFiles = files.filter(f => f.endsWith('.jsonl') && !f.includes('.deleted') && !f.includes('.reset'))
+        
+        // 找到最近修改的文件
+        let latestFile = null
+        let latestMtime = 0
+        
+        for (const file of jsonlFiles) {
+          const stat = await fs.promises.stat(path.join(sessionsDir, file))
+          if (stat.mtime.getTime() > latestMtime) {
+            latestMtime = stat.mtime.getTime()
+            latestFile = file
+          }
+        }
+        
+        // 从最近的文件中读取模型信息
+        if (latestFile) {
+          const content = await fs.promises.readFile(path.join(sessionsDir, latestFile), 'utf-8')
+          const lines = content.trim().split('\n').filter(l => l.trim())
+          
+          // 查找最近的消息记录中的 model 字段
+          for (let i = lines.length - 1; i >= 0; i--) {
+            try {
+              const obj = JSON.parse(lines[i])
+              if (obj.type === 'message' && obj.model) {
+                activeModel = obj.model.replace('bailian/', '')
+                break
+              }
+            } catch (e) {}
+          }
+        }
+      } catch (e) {
+        // 忽略错误
+      }
+      
       // 判断是否活跃：检查最近 N 分钟内是否有消息活动
       let status = 'idle'
       let lastActive = new Date(0)
@@ -185,7 +223,8 @@ app.get('/api/agents', async (req, res) => {
       return {
         id: agentId,
         name: name,
-        model: model,
+        model: model.replace('bailian/', ''),
+        activeModel: activeModel,
         status: status,
         lastActive: lastActive.toISOString(),
         skills: skills,
