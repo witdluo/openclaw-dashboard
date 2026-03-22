@@ -248,42 +248,111 @@ app.get('/api/cron', async (req, res) => {
 // API: 获取资源使用情况
 app.get('/api/resources', async (req, res) => {
   try {
-    // CPU 使用率
-    const { stdout: cpuOut } = await execAsync('top -l 1 -n 0 | grep "CPU usage" | head -1', { env })
-    const cpuMatch = cpuOut.match(/(\d+\.\d+)% user.*?(\d+\.\d+)% sys.*?(\d+\.\d+)% idle/)
-    const cpuIdle = cpuMatch ? parseFloat(cpuMatch[3]) : 100
-    const cpuUsage = 100 - cpuIdle
+    // 资源监控（跨平台支持）
+    const platform = process.platform
+    let cpuUsage = 0
+    let memUsage = 0
     
-    // 内存使用率
-    const { stdout: memOut } = await execAsync('vm_stat', { env })
-    const lines = memOut.split('\n')
-    const memStats = {}
-    
-    for (const line of lines) {
-      const match = line.match(/Pages\s+(\w+(?:\s+\w+)?):\s+(\d+)/)
-      if (match) {
-        memStats[`Pages ${match[1]}`] = parseInt(match[2])
+    if (platform === 'win32') {
+      // Windows: CPU 使用率
+      try {
+        const { stdout: cpuOut } = await execAsync('wmic cpu get loadpercentage /value', { env })
+        const cpuMatch = cpuOut.match(/LoadPercentage=(\d+)/i)
+        cpuUsage = cpuMatch ? parseFloat(cpuMatch[1]) : 0
+      } catch (e) {
+        try {
+          const { stdout: psOut } = await execAsync('powershell "Get-Counter \'\\\\Processor(_Total)\\\\% Processor Time\' | Select-Object -ExpandProperty CounterSamples | Select-Object CookedValue"', { env })
+          cpuUsage = parseFloat(psOut.trim()) || 0
+        } catch (e2) {
+          console.error('Windows CPU error:', e2)
+        }
       }
+      
+      // Windows: 内存使用率
+      try {
+        const { stdout: memOut } = await execAsync('wmic OS get TotalVisibleMemorySize,FreePhysicalMemory /value', { env })
+        const totalMatch = memOut.match(/TotalVisibleMemorySize=(\d+)/i)
+        const freeMatch = memOut.match(/FreePhysicalMemory=(\d+)/i)
+        
+        if (totalMatch && freeMatch) {
+          const totalKB = parseInt(totalMatch[1])
+          const freeKB = parseInt(freeMatch[1])
+          memUsage = totalKB > 0 ? Math.round(((totalKB - freeKB) / totalKB) * 100) : 0
+        }
+      } catch (e) {
+        try {
+          const { stdout: psOut } = await execAsync('powershell "(Get-CimInstance Win32_OperatingSystem) | Select-Object TotalVisibleMemorySize, FreePhysicalMemory | ConvertTo-Json"', { env })
+          const psData = JSON.parse(psOut)
+          const totalKB = psData.TotalVisibleMemorySize || 1
+          const freeKB = psData.FreePhysicalMemory || 0
+          memUsage = Math.round(((totalKB - freeKB) / totalKB) * 100)
+        } catch (e2) {
+          console.error('Windows Memory error:', e2)
+        }
+      }
+    } else if (platform === 'linux') {
+      // Linux: CPU 使用率
+      try {
+        const { stdout: cpuOut } = await execAsync('top -bn1 | grep "Cpu(s)" | head -1', { env })
+        const cpuMatch = cpuOut.match(/(\d+\.?\d*)%?\s*id/i)
+        const cpuIdle = cpuMatch ? parseFloat(cpuMatch[1]) : 100
+        cpuUsage = 100 - cpuIdle
+      } catch (e) {
+        try {
+          const { stdout: statOut } = await execAsync('cat /proc/stat | grep "^cpu " | awk \'{print $5}\'', { env })
+          const idle = parseInt(statOut.trim()) || 0
+          cpuUsage = Math.max(0, 100 - idle / 100)
+        } catch (e2) {
+          console.error('Linux CPU error:', e2)
+        }
+      }
+      
+      // Linux: 内存使用率
+      try {
+        const { stdout: memOut } = await execAsync('free | grep Mem', { env })
+        const parts = memOut.trim().split(/\s+/)
+        const total = parseInt(parts[1]) || 1
+        const available = parseInt(parts[6]) || parseInt(parts[3]) || 0
+        memUsage = Math.round(((total - available) / total) * 100)
+      } catch (e) {
+        console.error('Linux Memory error:', e)
+      }
+    } else {
+      // macOS: CPU 使用率
+      const { stdout: cpuOut } = await execAsync('top -l 1 -n 0 | grep "CPU usage" | head -1', { env })
+      const cpuMatch = cpuOut.match(/(\d+\.\d+)% user.*?(\d+\.\d+)% sys.*?(\d+\.\d+)% idle/)
+      const cpuIdle = cpuMatch ? parseFloat(cpuMatch[3]) : 100
+      cpuUsage = 100 - cpuIdle
+      
+      // macOS: 内存使用率
+      const { stdout: memOut } = await execAsync('vm_stat', { env })
+      const lines = memOut.split('\n')
+      const memStats = {}
+      
+      for (const line of lines) {
+        const match = line.match(/Pages\s+(\w+(?:\s+\w+)?):\s+(\d+)/)
+        if (match) {
+          memStats[`Pages ${match[1]}`] = parseInt(match[2])
+        }
+      }
+      
+      const totalPages = (memStats['Pages free'] || 0) + 
+                         (memStats['Pages active'] || 0) + 
+                         (memStats['Pages inactive'] || 0) + 
+                         (memStats['Pages wired down'] || 0) +
+                         (memStats['Pages speculative'] || 0)
+      const usedPages = (memStats['Pages active'] || 0) + 
+                        (memStats['Pages inactive'] || 0) + 
+                        (memStats['Pages wired down'] || 0)
+      
+      memUsage = totalPages > 0 ? Math.round((usedPages / totalPages) * 100) : 0
     }
-    
-    const totalPages = (memStats['Pages free'] || 0) + 
-                       (memStats['Pages active'] || 0) + 
-                       (memStats['Pages inactive'] || 0) + 
-                       (memStats['Pages wired down'] || 0) +
-                       (memStats['Pages speculative'] || 0)
-    const usedPages = (memStats['Pages active'] || 0) + 
-                      (memStats['Pages inactive'] || 0) + 
-                      (memStats['Pages wired down'] || 0)
-    
-    const memUsage = totalPages > 0 ? Math.round((usedPages / totalPages) * 100) : 0
     
     // 磁盘使用率（跨平台支持）
     let diskUsage = 0
     let diskTotal = '0G'
     let diskUsed = '0G'
     let diskAvail = '0G'
-    
-    const platform = process.platform
     
     if (platform === 'win32') {
       // Windows: 使用 wmic 命令
