@@ -2,16 +2,25 @@
 
 OpenClaw 控制面板 - 一个现代化的 Web 界面，用于监控和管理 OpenClaw 系统。
 
-![Dashboard Preview](./docs/preview.png)
-
 ## 功能特性
 
-- **Agent 管理** - 查看所有 Agent 状态、Skills、定时任务
+- **Agent 管理** - 查看所有 Agent 状态、Skills、定时任务、实时活动
 - **定时任务** - 查看和管理 Cron 任务
 - **资源监控** - 实时 CPU、内存、磁盘使用情况
-- **消息记录** - 查看今日聊天消息
+- **消息记录** - 查看所有历史聊天消息
 - **错误日志** - 查看系统错误和警告
 - **聊天界面** - 与 Agent 对话
+
+## 截图预览
+
+### Agent 管理
+![Agents](./docs/agents.png)
+
+### 定时任务
+![Cron](./docs/cron.png)
+
+### 资源监控
+![Resources](./docs/resources.png)
 
 ## 技术栈
 
