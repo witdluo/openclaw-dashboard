@@ -282,11 +282,12 @@ app.get('/api/resources', async (req, res) => {
     const diskMatch = diskOut.match(/(\d+)%/)
     const diskUsage = diskMatch ? parseInt(diskMatch[1]) : 0
     
-    // 解析磁盘详细信息
-    const diskParts = diskOut.trim().split(/\s+/)
-    const diskTotal = diskParts[1] || '0Gi'
-    const diskUsed = diskParts[2] || '0Gi'
-    const diskAvail = diskParts[3] || '0Gi'
+    // 解析磁盘详细信息（使用 df -H 获取十进制 GB）
+    const { stdout: diskOutH } = await execAsync('df -H / | tail -1', { env })
+    const diskPartsH = diskOutH.trim().split(/\s+/)
+    const diskTotal = diskPartsH[1] || '0G'
+    const diskUsed = diskPartsH[2] || '0G'
+    const diskAvail = diskPartsH[3] || '0G'
     
     res.json({ 
       cpu: parseFloat(cpuUsage.toFixed(1)), 
