@@ -162,6 +162,9 @@ export function ResourcePanel() {
             <div>
               <div style={{ fontSize: '13px', color: '#64748b' }}>磁盘使用</div>
               <div style={{ fontSize: '20px', fontWeight: 600, color: '#f8fafc' }}>{resources?.disk || 0}%</div>
+              <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                已用 {resources?.diskUsed || '-'} / 总计 {resources?.diskTotal || '-'} · 可用 {resources?.diskAvail || '-'}
+              </div>
             </div>
           </div>
           <div style={{ 

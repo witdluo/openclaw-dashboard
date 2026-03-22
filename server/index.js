@@ -282,7 +282,20 @@ app.get('/api/resources', async (req, res) => {
     const diskMatch = diskOut.match(/(\d+)%/)
     const diskUsage = diskMatch ? parseInt(diskMatch[1]) : 0
     
-    res.json({ cpu: parseFloat(cpuUsage.toFixed(1)), memory: memUsage, disk: diskUsage })
+    // 解析磁盘详细信息
+    const diskParts = diskOut.trim().split(/\s+/)
+    const diskTotal = diskParts[1] || '0Gi'
+    const diskUsed = diskParts[2] || '0Gi'
+    const diskAvail = diskParts[3] || '0Gi'
+    
+    res.json({ 
+      cpu: parseFloat(cpuUsage.toFixed(1)), 
+      memory: memUsage, 
+      disk: diskUsage,
+      diskTotal,
+      diskUsed,
+      diskAvail
+    })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
