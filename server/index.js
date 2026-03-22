@@ -120,12 +120,14 @@ app.get('/api/agents', async (req, res) => {
           const content = await fs.promises.readFile(path.join(sessionsDir, latestFile), 'utf-8')
           const lines = content.trim().split('\n').filter(l => l.trim())
           
-          // 查找最近的消息记录中的 model 字段
+          // 查找最近的 assistant 消息中的 model 字段（model 在 message 对象内）
           for (let i = lines.length - 1; i >= 0; i--) {
             try {
               const obj = JSON.parse(lines[i])
-              if (obj.type === 'message' && obj.model) {
-                activeModel = obj.model.replace('bailian/', '')
+              // model 字段可能在 obj.message.api 旁边，或者在 obj 顶层
+              const model = obj.message?.model || obj.model
+              if (obj.type === 'message' && obj.message?.role === 'assistant' && model) {
+                activeModel = model.replace('bailian/', '')
                 break
               }
             } catch (e) {}
