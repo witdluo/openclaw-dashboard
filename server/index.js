@@ -277,17 +277,75 @@ app.get('/api/resources', async (req, res) => {
     
     const memUsage = totalPages > 0 ? Math.round((usedPages / totalPages) * 100) : 0
     
-    // 磁盘使用率
-    const { stdout: diskOut } = await execAsync('df -h / | tail -1', { env })
-    const diskMatch = diskOut.match(/(\d+)%/)
-    const diskUsage = diskMatch ? parseInt(diskMatch[1]) : 0
+    // 磁盘使用率（跨平台支持）
+    let diskUsage = 0
+    let diskTotal = '0G'
+    let diskUsed = '0G'
+    let diskAvail = '0G'
     
-    // 解析磁盘详细信息（使用 df -H 获取十进制 GB）
-    const { stdout: diskOutH } = await execAsync('df -H / | tail -1', { env })
-    const diskPartsH = diskOutH.trim().split(/\s+/)
-    const diskTotal = diskPartsH[1] || '0G'
-    const diskUsed = diskPartsH[2] || '0G'
-    const diskAvail = diskPartsH[3] || '0G'
+    const platform = process.platform
+    
+    if (platform === 'win32') {
+      // Windows: 使用 wmic 命令
+      try {
+        const { stdout: diskOut } = await execAsync('wmic logicaldisk where "DeviceID=\'C:\'" get Size,FreeSpace,Caption /value', { env })
+        const sizeMatch = diskOut.match(/Size=(\d+)/i)
+        const freeMatch = diskOut.match(/FreeSpace=(\d+)/i)
+        
+        if (sizeMatch && freeMatch) {
+          const totalBytes = parseInt(sizeMatch[1])
+          const freeBytes = parseInt(freeMatch[1])
+          const usedBytes = totalBytes - freeBytes
+          
+          diskUsage = Math.round((usedBytes / totalBytes) * 100)
+          diskTotal = Math.round(totalBytes / 1e9) + 'G'
+          diskUsed = Math.round(usedBytes / 1e9) + 'G'
+          diskAvail = Math.round(freeBytes / 1e9) + 'G'
+        }
+      } catch (e) {
+        // 备用方案：PowerShell
+        try {
+          const { stdout: psOut } = await execAsync('powershell "Get-PSDrive C | Select-Object Used,Free | ConvertTo-Json"', { env })
+          const psData = JSON.parse(psOut)
+          const usedBytes = psData.Used || 0
+          const freeBytes = psData.Free || 0
+          const totalBytes = usedBytes + freeBytes
+          
+          diskUsage = totalBytes > 0 ? Math.round((usedBytes / totalBytes) * 100) : 0
+          diskTotal = Math.round(totalBytes / 1e9) + 'G'
+          diskUsed = Math.round(usedBytes / 1e9) + 'G'
+          diskAvail = Math.round(freeBytes / 1e9) + 'G'
+        } catch (e2) {
+          console.error('Windows disk error:', e2)
+        }
+      }
+    } else {
+      // macOS / Linux: 使用 df -H (十进制 GB)
+      const { stdout: diskOut } = await execAsync('df -H / | tail -1', { env })
+      const diskMatch = diskOut.match(/(\d+)%/)
+      diskUsage = diskMatch ? parseInt(diskMatch[1]) : 0
+      
+      const diskParts = diskOut.trim().split(/\s+/)
+      diskTotal = diskParts[1] || '0G'
+      diskUsed = diskParts[2] || '0G'
+      diskAvail = diskParts[3] || '0G'
+      
+      // macOS: 尝试获取更准确的可用空间（包含可清除空间）
+      if (platform === 'darwin') {
+        try {
+          const { stdout: infoOut } = await execAsync('diskutil info / 2>/dev/null | grep -E "Available Space|Total Size"', { env })
+          const availMatch = infoOut.match(/Available Space.*?(\d+\.?\d*)\s*(GB|Gi|TB)/i)
+          
+          if (availMatch) {
+            const availValue = parseFloat(availMatch[1])
+            const availUnit = availMatch[2].toUpperCase()
+            diskAvail = availUnit === 'TB' ? (availValue * 1000) + 'G' : availValue + 'G'
+          }
+        } catch (e) {
+          // 使用 df 的值
+        }
+      }
+    }
     
     res.json({ 
       cpu: parseFloat(cpuUsage.toFixed(1)), 
@@ -295,7 +353,8 @@ app.get('/api/resources', async (req, res) => {
       disk: diskUsage,
       diskTotal,
       diskUsed,
-      diskAvail
+      diskAvail,
+      platform
     })
   } catch (error) {
     res.status(500).json({ error: error.message })
