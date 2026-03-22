@@ -1,6 +1,6 @@
 # OpenClaw Dashboard
 
-OpenClaw 控制面板 - 一个现代化的 Web 界面，用于监控和管理 OpenClaw 系统。
+一个简约主题的 OpenClaw 信息可视化面板
 
 ## 功能特性
 
