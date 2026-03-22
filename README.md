@@ -23,6 +23,15 @@
 ### 资源监控
 ![Resources](./docs/resources.png)
 
+### 消息记录
+![Messages](./docs/messages.png)
+
+### 错误日志
+![Logs](./docs/logs.png)
+
+### 聊天界面
+![Chat](./docs/chat.png)
+
 ## 技术栈
 
 - **前端**: React + TypeScript + Vite
