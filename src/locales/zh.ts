@@ -1,7 +1,7 @@
 // 中文语言包
 export const zh = {
   sidebar: {
-    controlPanel: '控制面板',
+    controlPanel: '概要信息',
     agents: 'Agents',
     cron: '定时任务',
     resources: '资源监控',

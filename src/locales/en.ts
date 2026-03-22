@@ -3,7 +3,7 @@ import type { Language } from './zh'
 
 export const en: Language = {
   sidebar: {
-    controlPanel: 'Control Panel',
+    controlPanel: 'Overview',
     agents: 'Agents',
     cron: 'Scheduled Tasks',
     resources: 'Resources',

@@ -31,7 +31,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
     <aside style={{ width: 200, display: 'flex', flexDirection: 'column', background: '#1e293b', borderRight: '1px solid #334155', height: '100vh' }}>
       <div style={{ height: 56, borderBottom: '1px solid #334155', display: 'flex', alignItems: 'center', padding: '0 16px', gap: 10 }}>
         <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #8b5cf6, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🦞</div>
-        <div style={{ fontWeight: 600, fontSize: 15, color: '#f8fafc' }}>OpenClaw</div>
+        <div style={{ fontWeight: 600, fontSize: 15, color: '#f8fafc' }}>OpenClaw Dashboard</div>
       </div>
       
       {/* 语言切换按钮 - 控制面板上方 */}
