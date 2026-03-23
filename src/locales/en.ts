@@ -9,7 +9,6 @@ export const en: Language = {
     resources: 'Resources',
     messages: 'Messages',
     logs: 'Error Logs',
-    chat: 'Chat',
     menu: 'Menu',
     systemRunning: 'System Running',
   },
@@ -68,14 +67,6 @@ export const en: Language = {
     warning: 'Warning',
     info: 'Info',
     noLogs: 'No logs',
-  },
-  chat: {
-    selectAgent: 'Select Agent',
-    conversations: 'conversations',
-    sendMessage: 'Send message to',
-    send: 'Send',
-    typing: 'Typing...',
-    startChat: 'Select an Agent to start chatting',
   },
   common: {
     loading: 'Loading...',

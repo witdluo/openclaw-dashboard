@@ -6,7 +6,6 @@ import { CronPanel } from './components/cron/CronPanel'
 import { ResourcePanel } from './components/resources/ResourcePanel'
 import { MessagePanel } from './components/messages/MessagePanel'
 import { LogPanel } from './components/logs/LogPanel'
-import { ChatPanel } from './components/chat/ChatPanel'
 
 function App() {
   const [activeTab, setActiveTab] = useState('agents')
@@ -18,7 +17,6 @@ function App() {
       case 'resources': return <ResourcePanel />
       case 'messages': return <MessagePanel />
       case 'logs': return <LogPanel />
-      case 'chat': return <ChatPanel />
       default: return <AgentPanel onNavigate={setActiveTab} />
     }
   }

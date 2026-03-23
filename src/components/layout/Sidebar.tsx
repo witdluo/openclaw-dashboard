@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Users, Clock, Activity, MessageSquare, FileText, MessageCircle, Zap, Globe } from 'lucide-react'
+import { Users, Clock, Activity, MessageSquare, FileText, Zap, Globe } from 'lucide-react'
 import { useLanguage } from '../../contexts/LanguageContext'
 
 interface SidebarProps { activeTab: string; onTabChange: (tab: string) => void }
@@ -24,7 +24,6 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
     { id: 'resources', label: t.sidebar.resources, icon: Activity, color: '#10b981' },
     { id: 'messages', label: t.sidebar.messages, icon: MessageSquare, color: '#f59e0b' },
     { id: 'logs', label: t.sidebar.logs, icon: FileText, color: '#f43f5e' },
-    { id: 'chat', label: t.sidebar.chat, icon: MessageCircle, color: '#06b6d4' },
   ]
 
   return (

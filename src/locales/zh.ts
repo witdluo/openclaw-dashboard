@@ -7,7 +7,6 @@ export const zh = {
     resources: '资源监控',
     messages: '消息记录',
     logs: '错误日志',
-    chat: '聊天',
     menu: '菜单',
     systemRunning: '系统运行中',
   },
@@ -66,14 +65,6 @@ export const zh = {
     warning: '警告',
     info: '信息',
     noLogs: '暂无日志记录',
-  },
-  chat: {
-    selectAgent: '选择 Agent',
-    conversations: '条对话',
-    sendMessage: '发送消息给',
-    send: '发送',
-    typing: '正在输入...',
-    startChat: '选择一个 Agent 开始聊天',
   },
   common: {
     loading: '加载中...',
